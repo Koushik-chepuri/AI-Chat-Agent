@@ -1,0 +1,45 @@
+import { env } from "../../config/env.js";
+import type { LLMService, LLMMessage } from "./llm.interface.ts";
+import { STORE_CONTEXT } from "./store-context.js";
+
+export class OllamaLLMService implements LLMService {
+    async generateReply(history: LLMMessage[], userMessage: string): Promise<string> {
+        const prompt = this.buildPrompt(history, userMessage);
+
+        const res = await fetch(`${env.OLLAMA_BASE_URL}/api/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            model: env.OLLAMA_MODEL,
+            prompt,
+            stream: false,
+        }),
+        });
+
+        if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Ollama error (${res.status}): ${text}`);
+        }
+
+        const data = await res.json();
+        const reply = data?.response?.trim();
+
+        if (!reply) throw new Error("Empty response from Ollama");
+
+        return reply;
+    }
+
+    private buildPrompt(history: LLMMessage[], userMessage: string): string {
+        let p = "";
+
+        p += `System: ${STORE_CONTEXT}\n\n`;
+
+        for (const m of history) {
+            if (m.role === "user") p += `User: ${m.content}\n`;
+            if (m.role === "assistant") p += `Assistant: ${m.content}\n`;
+        }
+
+        p += `User: ${userMessage}\nAssistant:`;
+        return p;
+    }
+}

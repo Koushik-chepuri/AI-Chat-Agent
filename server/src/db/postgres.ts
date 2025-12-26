@@ -1,0 +1,14 @@
+import pg from "pg";
+import { env } from "../config/env.js";
+
+const { Pool } = pg;
+
+export const pool = new Pool({
+    connectionString: env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false }
+});
+
+export async function connectDB() {
+    await pool.query("select 1");
+    console.log("✅ Postgres connected");
+}
