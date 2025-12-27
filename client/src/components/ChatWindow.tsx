@@ -4,15 +4,20 @@ import { ChatInput } from "./ChatInput";
 import "../styles/ChatWindow.css";
 
 export function ChatWindow() {
-  const { messages, isSending, error, handleSend, bottomRef } = useChat();
+  const { messages, isSending, isThinking, error, handleSend, bottomRef } =
+    useChat();
 
   return (
     <div className="chat-window">
-      <MessageList messages={messages} bottomRef={bottomRef} />
+      <MessageList
+        messages={messages}
+        bottomRef={bottomRef}
+        isThinking={isThinking}
+      />
 
       {error && <div className="chat-error">{error}</div>}
 
-      <ChatInput onSend={handleSend} disabled={isSending} />
+      <ChatInput onSend={handleSend} disabled={isSending || isThinking} />
     </div>
   );
 }

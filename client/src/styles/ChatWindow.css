@@ -1,14 +1,15 @@
 .chat-window {
-  height: 100vh;
   display: flex;
   flex-direction: column;
-  border: 1px solid #ddd;
-  max-width: 600px;
-  margin: 0 auto;
+  height: 100vh;
+  background: #111827
 }
 
 .chat-error {
-  color: red;
-  padding: 0 12px;
-  font-size: 13px;
+  margin: 8px 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #2a1212;
+  color: #ffb4b4;
+  font-size: 14px;
 }

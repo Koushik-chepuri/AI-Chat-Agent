@@ -1,8 +1,16 @@
-import { saveMessage, getMessagesByConversation } from "../repositories/messages.repo.js";
+import {
+  saveMessage,
+  getMessagesByConversation,
+} from "../repositories/messages.repo.js";
+
 import { getLLMService } from "./llm/index.js";
 import type { LLMMessage } from "./llm/llm.interface.js";
 
-export async function createUserMessageAndReplyService(
+/**
+ * Phase 1 (critical path): Save user message fast.
+ * This must succeed quickly or fail clearly.
+ */
+export async function createUserMessageService(
   conversationId: string,
   content: string
 ) {
@@ -10,41 +18,43 @@ export async function createUserMessageAndReplyService(
     throw new Error("Invalid message payload");
   }
 
-  // 1️⃣ Save user message
-  const userMessage = await saveMessage(conversationId, "user", content);
+  return saveMessage(conversationId, "user", content);
+}
 
-  // 2️⃣ Load conversation history
+/**
+ * Phase 2 (best-effort): Generate assistant reply and save it.
+ * This should NEVER cause the original POST /messages request to fail.
+ */
+export async function generateAssistantReplyService(
+  conversationId: string,
+  latestUserContent: string
+) {
+  if (!conversationId || !latestUserContent) return;
+
   const history = await getMessagesByConversation(conversationId);
 
-  // Exclude the last user message to avoid duplication
-  const llmHistory: LLMMessage[] = history
-    .slice(0, -1)
-    .map(m => ({
-      role: m.role,
-      content: m.content
+  // 🔒 SAFETY: generate only once per user message
+  const last = history[history.length - 1];
+  if (!last || last.role !== "user") return;
+
+  /**
+   * CRITICAL CHANGE:
+   * - Keep ONLY assistant messages as context
+   * - DROP all previous user messages
+   */
+  const assistantContext: LLMMessage[] = history
+    .slice(0, -1) // exclude current user message
+    .filter((m) => m.role === "assistant")
+    .map((m) => ({
+      role: "assistant",
+      content: m.content,
     }));
 
-  // 3️⃣ Call LLM
-  let assistantReply: string;
+  const llm = await getLLMService();
 
-    try {
-        const llm = await getLLMService();
-        assistantReply = await llm.generateReply(llmHistory, content);
-    } catch (err) {
-        throw new Error("AI service is temporarily unavailable. Please try again.");
-    }
+  const reply = await llm.generateReply(assistantContext, latestUserContent);
 
-  // 4️⃣ Save assistant message
-  const assistantMessage = await saveMessage(
-    conversationId,
-    "assistant",
-    assistantReply
-  );
-
-  return {
-    user: userMessage,
-    assistant: assistantMessage
-  };
+  await saveMessage(conversationId, "assistant", reply);
 }
 
 export async function getMessagesByConversationService(conversationId: string) {

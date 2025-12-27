@@ -1,16 +1,19 @@
 import { api } from "./axios";
 import type { Message } from "../types/chat";
 
-// Backend message shape
+type BackendConversation = {
+  id: string;
+  created_at: string;
+};
+
 type BackendMessage = {
   id: string;
   conversation_id: string;
-  role: "user" | "assistant";
+  role: "user" | "assistant" | "system";
   content: string;
   created_at: string;
 };
 
-// Helper: normalize backend → frontend
 function normalizeMessage(m: BackendMessage): Message {
   return {
     id: m.id,
@@ -20,32 +23,22 @@ function normalizeMessage(m: BackendMessage): Message {
   };
 }
 
-// Create new conversation
-export async function createConversation(): Promise<{ id: string }> {
+export async function createConversation(): Promise<BackendConversation> {
   const res = await api.post("/conversations");
   return res.data;
 }
 
-// Send message
-export async function sendMessage(
-  content: string,
-  conversationId: string
-): Promise<{ assistant: Message }> {
-  const res = await api.post("/messages", {
-    content,
-    conversationId,
-  });
-
-  return {
-    assistant: normalizeMessage(res.data.assistant),
-  };
+/**
+ * Backend now returns: { user: <saved user message> }
+ */
+export async function sendMessage(conversationId: string, content: string) {
+  const res = await api.post("/messages", { conversationId, content });
+  return res.data as { user: BackendMessage };
 }
 
-// Fetch conversation history
 export async function fetchMessages(
   conversationId: string
 ): Promise<Message[]> {
   const res = await api.get(`/conversations/${conversationId}/messages`);
-
-  return res.data.map(normalizeMessage);
+  return (res.data as BackendMessage[]).map(normalizeMessage);
 }
