@@ -1,5 +1,5 @@
 export type LLMMessage = {
-  role: "system" | "user" | "assistant";
+  role: "system" | "user" | "ai";
   content: string;
 };
 

@@ -35,11 +35,11 @@ export class OllamaLLMService implements LLMService {
         p += `System: ${STORE_CONTEXT}\n\n`;
 
         for (const m of history) {
-            if (m.role === "user") p += `User: ${m.content}\n`;
-            if (m.role === "assistant") p += `Assistant: ${m.content}\n`;
+          if (m.role === "user") p += `User: ${m.content}\n`;
+          if (m.role === "ai") p += `AI: ${m.content}\n`;
         }
 
-        p += `User: ${userMessage}\nAssistant:`;
+        p += `User: ${userMessage}\nAI:`;
         return p;
     }
 }
