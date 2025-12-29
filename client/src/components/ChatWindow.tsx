@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useChat } from "../hooks/useChat";
 import { Sidebar } from "./Sidebar";
 import { MessageList } from "./MessageList";
 import { ChatInput } from "./ChatInput";
 import type { BackendConversation } from "../types/chat";
-import { fetchConversations } from "../api/chat.api";
+import { fetchConversations, createConversation } from "../api/chat.api";
 import "../styles/ChatWindow.css";
 
 export function ChatWindow() {
@@ -20,19 +20,46 @@ export function ChatWindow() {
     resetConversation,
   } = useChat();
 
-  const [refreshKey, setRefreshKey] = useState(0);
   const [conversations, setConversations] = useState<BackendConversation[]>([]);
   const [loadingConvos, setLoadingConvos] = useState(true);
 
+  const hasAutoCreatedRef = useRef(false);
+
+  // Load conversations
   useEffect(() => {
     fetchConversations()
       .then(setConversations)
       .finally(() => setLoadingConvos(false));
   }, []);
 
-  function handleNewChat() {
+  useEffect(() => {
+    if (loadingConvos) return;
+    if (hasAutoCreatedRef.current) return;
+
+    const exists =
+      conversationId && conversations.some((c) => c.id === conversationId);
+
+    if (conversations.length === 0 || !exists) {
+      hasAutoCreatedRef.current = true;
+
+      (async () => {
+        const convo = await createConversation();
+
+        setConversations([convo]);
+        setConversationId(convo.id);
+        localStorage.setItem("conversationId", convo.id);
+      })();
+    }
+  }, [loadingConvos, conversations, conversationId]);
+
+  async function handleNewChat() {
     resetConversation();
-    setRefreshKey((k) => k + 1);
+
+    const convo = await createConversation();
+
+    setConversations((prev) => [convo, ...prev]);
+    setConversationId(convo.id);
+    localStorage.setItem("conversationId", convo.id);
   }
 
   function handleSelectConversation(id: string) {
@@ -40,14 +67,11 @@ export function ChatWindow() {
     setConversationId(id);
   }
 
-  async function handleSendAndRefreshSidebar(text: string) {
-    const isFirstMessage = messages.length === 0;
+  async function handleSendAndSync(text: string) {
+    await handleSend(text);
 
-    const convo = await handleSend(text);
-
-    if (isFirstMessage && convo) {
-      setConversations((prev) => [convo, ...prev]);
-    }
+    const updated = await fetchConversations();
+    setConversations(updated);
   }
 
   return (
@@ -70,8 +94,8 @@ export function ChatWindow() {
         {error && <div className="chat-error">{error}</div>}
 
         <ChatInput
-          onSend={handleSendAndRefreshSidebar}
-          disabled={isSending || isThinking}
+          onSend={handleSendAndSync}
+          disabled={!conversationId || isSending || isThinking}
         />
       </div>
     </div>

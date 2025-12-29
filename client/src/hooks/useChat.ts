@@ -1,16 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  createConversation,
-  fetchMessages,
-  sendMessage,
-} from "../api/chat.api";
-import type { BackendMessage, BackendConversation } from "../types/chat";
+import { fetchMessages, sendMessage } from "../api/chat.api";
+import type { BackendMessage } from "../types/chat";
 
 export function useChat() {
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
+  const stored = localStorage.getItem("conversationId");
   const [conversationId, setConversationId] = useState<string | null>(
-    localStorage.getItem("conversationId")
+    stored && stored !== "null" ? stored : null
   );
 
   const [messages, setMessages] = useState<BackendMessage[]>([]);
@@ -19,7 +16,12 @@ export function useChat() {
   const [isThinking, setIsThinking] = useState(false);
 
   useEffect(() => {
-    if (!conversationId) return;
+    if (!conversationId) {
+      setMessages([]);
+      return;
+    }
+
+    setError(null);
 
     fetchMessages(conversationId)
       .then(setMessages)
@@ -48,38 +50,27 @@ export function useChat() {
     return () => clearInterval(interval);
   }, [conversationId, isThinking]);
 
-  async function ensureConversation(): Promise<BackendConversation> {
-    if (conversationId) {
-      return { id: conversationId } as BackendConversation;
-    }
-
-    const convo = await createConversation();
-    localStorage.setItem("conversationId", convo.id);
-    setConversationId(convo.id);
-    return convo;
-  }
-
   async function handleSend(text: string) {
     const content = text.trim();
     if (!content) return;
+
+    if (!conversationId) {
+      setError("No active conversation");
+      return;
+    }
 
     setError(null);
     setIsSending(true);
 
     try {
-      const convo = await ensureConversation();
+      await sendMessage(conversationId, content);
 
-      await sendMessage(convo.id, content);
-
-      const data = await fetchMessages(convo.id);
+      const data = await fetchMessages(conversationId);
       setMessages(data);
 
       setIsThinking(true);
-
-      return convo;
     } catch {
       setError("Failed to send message");
-      return null;
     } finally {
       setIsSending(false);
     }

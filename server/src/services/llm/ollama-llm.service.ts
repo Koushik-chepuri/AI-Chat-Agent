@@ -35,18 +35,14 @@ export class OllamaLLMService implements LLMService {
   private buildPrompt(aiHistory: LLMMessage[], userMessage: string): string {
     let p = "";
 
-    // System context (rules + knowledge)
     p += `System: ${STORE_CONTEXT}\n\n`;
 
-    // ONLY assistant replies as context
     for (const m of aiHistory) {
       p += `AI: ${m.content}\n`;
     }
 
-    // 🔒 HARD RESET BEFORE NEW QUESTION
     p += `\n---\n`;
 
-    // Latest user question ONLY
     p += `User: ${userMessage}\nAI:`;
 
     return p;

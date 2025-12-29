@@ -13,6 +13,18 @@ export async function saveMessage(
         `,
     [conversationId, role, content]
   );
+  
+  if (role === "user") {
+    await pool.query(
+      `
+      update conversations
+      set title = left($1, 50)
+      where id = $2
+        and title = 'New Chat'
+      `,
+      [content, conversationId]
+    );
+  }
 
   return result.rows[0];
 }

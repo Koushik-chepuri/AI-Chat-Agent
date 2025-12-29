@@ -16,18 +16,11 @@ export async function createConversation() {
 export async function getAllConversations() {
   const result = await pool.query(`
     select
-      c.id,
-      c.created_at,
-      (
-        select m.content
-        from messages m
-        where m.conversation_id = c.id
-          and m.role = 'user'
-        order by m.created_at asc
-        limit 1
-      ) as title
+        c.id,
+        c.created_at,
+        c.title
     from conversations c
-    order by c.created_at desc
+    order by c.created_at desc;
   `);
 
   return result.rows;
