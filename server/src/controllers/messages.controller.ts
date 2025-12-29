@@ -36,16 +36,13 @@ export async function createMessageController(
       });
     }
 
-    // ✅ Phase 1: Save user message (fast)
+    // save user msg
     const userMessage = await createUserMessageService(conversationId, trimmed);
-
-    // ✅ Respond immediately — frontend should show user bubble right away
     res
       .status(201)
       .json({ user: userMessage, assistant: null, status: "thinking" });
 
-    // ✅ Phase 2: Generate assistant reply in background
-    // Never throw into Express after response is sent.
+    // generate reply
     generateAssistantReplyService(conversationId, trimmed).catch((err) => {
       console.error("AI reply failed:", err);
     });

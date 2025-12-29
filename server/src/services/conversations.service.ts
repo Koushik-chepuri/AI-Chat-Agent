@@ -1,5 +1,12 @@
-import { createConversation } from "../repositories/conversations.repo.js";
+import {
+  createConversation,
+  getAllConversations,
+} from "../repositories/conversations.repo.js";
 
 export async function createConversationService() {
-    return createConversation();
+  return createConversation();
+}
+
+export async function getAllConversationsService() {
+  return getAllConversations();
 }

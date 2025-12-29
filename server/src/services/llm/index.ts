@@ -18,6 +18,6 @@ export async function getLLMService(): Promise<LLMService> {
   const ok = await isOllamaAvailable();
   if (ok) return new OllamaLLMService();
 
-  console.warn("⚠️ Ollama not detected. Falling back to MockLLMService.");
+  console.warn("Ollama not detected. Falling back to MockLLMService.");
   return new MockLLMService();
 }

@@ -1,5 +1,5 @@
 import type React from "react";
-import type { Message } from "../types/chat";
+import type { BackendMessage } from "../types/chat";
 import { MessageBubble } from "./MessageBubble";
 import "../styles/MessageList.css";
 
@@ -8,7 +8,7 @@ export function MessageList({
   bottomRef,
   isThinking,
 }: {
-  messages: Message[];
+  messages: BackendMessage[];
   bottomRef: React.RefObject<HTMLDivElement | null>;
   isThinking: boolean;
 }) {

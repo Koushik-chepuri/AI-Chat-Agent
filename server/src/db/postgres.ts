@@ -10,5 +10,5 @@ export const pool = new Pool({
 
 export async function connectDB() {
     await pool.query("select 1");
-    console.log("✅ Postgres connected");
+    console.log("Postgres connected");
 }

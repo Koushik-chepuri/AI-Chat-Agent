@@ -1,8 +1,13 @@
-export type Sender = "user" | "ai";
+export type BackendMessage = {
+  id: string;
+  conversation_id: string;
+  role: "user" | "ai";
+  content: string;
+  created_at: string;
+};
 
-export type Message = {
-    id: string;
-    sender: Sender;
-    text: string;
-    timestamp: string;
+export type BackendConversation = {
+  id: string;
+  title: string | null;
+  created_at: string;
 };

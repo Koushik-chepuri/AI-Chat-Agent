@@ -4,10 +4,10 @@ import { STORE_CONTEXT } from "./store-context.js";
 
 export class OllamaLLMService implements LLMService {
   async generateReply(
-    assistantHistory: LLMMessage[],
+    aiHistory: LLMMessage[],
     userMessage: string
   ): Promise<string> {
-    const prompt = this.buildPrompt(assistantHistory, userMessage);
+    const prompt = this.buildPrompt(aiHistory, userMessage);
 
     const res = await fetch(`${env.OLLAMA_BASE_URL}/api/generate`, {
       method: "POST",
@@ -32,17 +32,14 @@ export class OllamaLLMService implements LLMService {
     return reply;
   }
 
-  private buildPrompt(
-    assistantHistory: LLMMessage[],
-    userMessage: string
-  ): string {
+  private buildPrompt(aiHistory: LLMMessage[], userMessage: string): string {
     let p = "";
 
     // System context (rules + knowledge)
     p += `System: ${STORE_CONTEXT}\n\n`;
 
     // ONLY assistant replies as context
-    for (const m of assistantHistory) {
+    for (const m of aiHistory) {
       p += `AI: ${m.content}\n`;
     }
 

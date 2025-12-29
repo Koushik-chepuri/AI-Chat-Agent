@@ -8,21 +8,22 @@ export function ChatInput({
   onSend: (text: string) => void;
   disabled: boolean;
 }) {
-  const [text, setText] = useState("");
+  const [content, setContent] = useState("");
 
   function handleSubmit() {
     if (disabled) return;
-    const trimmed = text.trim();
+
+    const trimmed = content.trim();
     if (!trimmed) return;
     onSend(trimmed);
-    setText("");
+    setContent("");
   }
 
   return (
     <div className="chat-input">
       <input
-        value={text}
-        onChange={(e) => setText(e.target.value)}
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
         placeholder={disabled ? "Sending..." : "Type a message..."}
         disabled={disabled}
         onKeyDown={(e) => {

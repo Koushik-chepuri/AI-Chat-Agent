@@ -4,7 +4,7 @@ import {
   fetchMessages,
   sendMessage,
 } from "../api/chat.api";
-import type { Message } from "../types/chat";
+import type { BackendMessage, BackendConversation } from "../types/chat";
 
 export function useChat() {
   const bottomRef = useRef<HTMLDivElement | null>(null);
@@ -13,13 +13,11 @@ export function useChat() {
     localStorage.getItem("conversationId")
   );
 
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<BackendMessage[]>([]);
   const [error, setError] = useState<string | null>(null);
-
   const [isSending, setIsSending] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
 
-  /** Load messages whenever conversationId changes */
   useEffect(() => {
     if (!conversationId) return;
 
@@ -28,12 +26,10 @@ export function useChat() {
       .catch(() => setError("Failed to load messages"));
   }, [conversationId]);
 
-  /** Auto-scroll */
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isThinking]);
 
-  /** Poll messages WHILE agent is thinking */
   useEffect(() => {
     if (!conversationId || !isThinking) return;
 
@@ -43,24 +39,24 @@ export function useChat() {
         setMessages(data);
 
         const last = data[data.length - 1];
-        if (last?.sender === "ai") {
+        if (last?.role === "ai") {
           setIsThinking(false);
         }
-      } catch {
-        // ignore temporary fetch errors
-      }
+      } catch {}
     }, 1000);
 
     return () => clearInterval(interval);
   }, [conversationId, isThinking]);
 
-  async function ensureConversation() {
-    if (conversationId) return conversationId;
+  async function ensureConversation(): Promise<BackendConversation> {
+    if (conversationId) {
+      return { id: conversationId } as BackendConversation;
+    }
 
     const convo = await createConversation();
     localStorage.setItem("conversationId", convo.id);
     setConversationId(convo.id);
-    return convo.id;
+    return convo;
   }
 
   async function handleSend(text: string) {
@@ -71,19 +67,19 @@ export function useChat() {
     setIsSending(true);
 
     try {
-      const convoId = await ensureConversation();
+      const convo = await ensureConversation();
 
-      // send message
-      await sendMessage(convoId, content);
+      await sendMessage(convo.id, content);
 
-      // immediately refresh messages to show user bubble
-      const data = await fetchMessages(convoId);
+      const data = await fetchMessages(convo.id);
       setMessages(data);
 
-      // now wait for assistant
       setIsThinking(true);
+
+      return convo;
     } catch {
       setError("Failed to send message");
+      return null;
     } finally {
       setIsSending(false);
     }
@@ -96,5 +92,12 @@ export function useChat() {
     error,
     handleSend,
     bottomRef,
+    conversationId,
+    setConversationId,
+    resetConversation: () => {
+      localStorage.removeItem("conversationId");
+      setConversationId(null);
+      setMessages([]);
+    },
   };
 }
