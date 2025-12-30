@@ -17,7 +17,6 @@ export function ChatWindow() {
     bottomRef,
     conversationId,
     setConversationId,
-    resetConversation,
   } = useChat();
 
   const [conversations, setConversations] = useState<BackendConversation[]>([]);
@@ -25,7 +24,6 @@ export function ChatWindow() {
 
   const hasAutoCreatedRef = useRef(false);
 
-  // Load conversations
   useEffect(() => {
     fetchConversations()
       .then(setConversations)
@@ -35,26 +33,20 @@ export function ChatWindow() {
   useEffect(() => {
     if (loadingConvos) return;
     if (hasAutoCreatedRef.current) return;
+    if (conversations.length !== 0) return;
 
-    const exists =
-      conversationId && conversations.some((c) => c.id === conversationId);
+    hasAutoCreatedRef.current = true;
 
-    if (conversations.length === 0 || !exists) {
-      hasAutoCreatedRef.current = true;
+    (async () => {
+      const convo = await createConversation();
 
-      (async () => {
-        const convo = await createConversation();
-
-        setConversations([convo]);
-        setConversationId(convo.id);
-        localStorage.setItem("conversationId", convo.id);
-      })();
-    }
-  }, [loadingConvos, conversations, conversationId]);
+      setConversations([convo]);
+      setConversationId(convo.id);
+      localStorage.setItem("conversationId", convo.id);
+    })();
+  }, [loadingConvos, conversations]);
 
   async function handleNewChat() {
-    resetConversation();
-
     const convo = await createConversation();
 
     setConversations((prev) => [convo, ...prev]);
@@ -92,7 +84,11 @@ export function ChatWindow() {
             isThinking={isThinking}
           />
 
-          {error && <div className="chat-error">{error}</div>}
+          {error && (
+            <div className="bubble-row left">
+              <div className="bubble bubble-ai">{error}</div>
+            </div>
+          )}
 
           <ChatInput
             onSend={handleSendAndSync}
@@ -102,5 +98,4 @@ export function ChatWindow() {
       </div>
     </div>
   );
-
 }

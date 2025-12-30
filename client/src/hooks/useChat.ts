@@ -13,7 +13,12 @@ export function useChat() {
   const [messages, setMessages] = useState<BackendMessage[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
-  const [isThinking, setIsThinking] = useState(false);
+
+  const [thinkingByConversation, setThinkingByConversation] = useState<
+    Record<string, boolean>
+  >({});
+
+  const pollingRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!conversationId) {
@@ -30,34 +35,54 @@ export function useChat() {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isThinking]);
+  }, [messages, conversationId]);
 
   useEffect(() => {
-    if (!conversationId || !isThinking) return;
+    if (!conversationId) return;
+
+    const last = messages[messages.length - 1];
+    if (!last || last.role !== "user") return;
+
+    if (pollingRef.current === conversationId) return;
+
+    pollingRef.current = conversationId;
 
     const interval = setInterval(async () => {
-      try {
-        const data = await fetchMessages(conversationId);
-        setMessages(data);
+      const data = await fetchMessages(conversationId);
+      setMessages(data);
 
-        const last = data[data.length - 1];
-        if (last?.role === "ai") {
-          setIsThinking(false);
-        }
-      } catch {}
-    }, 1000);
+      const updatedLast = data[data.length - 1];
+      if (updatedLast?.role === "ai") {
+        setThinkingByConversation((prev) => ({
+          ...prev,
+          [conversationId]: false,
+        }));
 
-    return () => clearInterval(interval);
-  }, [conversationId, isThinking]);
+        pollingRef.current = null;
+        clearInterval(interval);
+      }
+    }, 1500);
+
+    return () => {
+      pollingRef.current = null;
+      clearInterval(interval);
+    };
+  }, [conversationId, messages]);
+
+  useEffect(() => {
+    if (!conversationId) return;
+
+    const last = messages[messages.length - 1];
+
+    setThinkingByConversation((prev) => ({
+      ...prev,
+      [conversationId]: last?.role === "user",
+    }));
+  }, [conversationId, messages]);
 
   async function handleSend(text: string) {
     const content = text.trim();
-    if (!content) return;
-
-    if (!conversationId) {
-      setError("No active conversation");
-      return;
-    }
+    if (!content || !conversationId) return;
 
     setError(null);
     setIsSending(true);
@@ -65,12 +90,15 @@ export function useChat() {
     try {
       await sendMessage(conversationId, content);
 
+      setThinkingByConversation((prev) => ({
+        ...prev,
+        [conversationId]: true,
+      }));
+
       const data = await fetchMessages(conversationId);
       setMessages(data);
-
-      setIsThinking(true);
-    } catch {
-      setError("Failed to send message");
+    } catch (err: any) {
+      setError(err?.response?.data?.error || "Failed to send message");
     } finally {
       setIsSending(false);
     }
@@ -79,12 +107,17 @@ export function useChat() {
   return {
     messages,
     isSending,
-    isThinking,
     error,
     handleSend,
     bottomRef,
     conversationId,
     setConversationId,
+
+    isThinking:
+      conversationId != null
+        ? thinkingByConversation[conversationId] ?? false
+        : false,
+
     resetConversation: () => {
       localStorage.removeItem("conversationId");
       setConversationId(null);
