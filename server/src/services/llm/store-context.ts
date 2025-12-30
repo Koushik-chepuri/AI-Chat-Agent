@@ -12,6 +12,7 @@ export const STORE_CONTEXT = `
     Returns & Refunds:
     - Returns are accepted within 14 days of delivery.
     - Items must be unused and in original packaging.
+    - Pickups are initiated the next day of a return request.
     - Refunds are processed within 5 business days after inspection.
     - Shipping fees are non-refundable.
 
