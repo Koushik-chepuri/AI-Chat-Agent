@@ -85,19 +85,22 @@ export function ChatWindow() {
       />
 
       <div className="chat-main">
-        <MessageList
-          messages={messages}
-          bottomRef={bottomRef}
-          isThinking={isThinking}
-        />
+        <div className="chat-content">
+          <MessageList
+            messages={messages}
+            bottomRef={bottomRef}
+            isThinking={isThinking}
+          />
 
-        {error && <div className="chat-error">{error}</div>}
+          {error && <div className="chat-error">{error}</div>}
 
-        <ChatInput
-          onSend={handleSendAndSync}
-          disabled={!conversationId || isSending || isThinking}
-        />
+          <ChatInput
+            onSend={handleSendAndSync}
+            disabled={!conversationId || isSending || isThinking}
+          />
+        </div>
       </div>
     </div>
   );
+
 }

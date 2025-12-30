@@ -12,24 +12,24 @@
 }
 
 .bubble {
-  max-width: min(680px, 78%);
-  padding: 10px 12px;
-  border-radius: 14px;
-  line-height: 1.35;
-  white-space: pre-wrap; /* preserves newlines */
-  word-break: break-word;
+  max-width: 680px;
+  padding: 10px 14px;
+  border-radius: 16px;
+  line-height: 1.45;
   font-size: 14px;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .bubble-user {
-  background: #1f6feb;
+  background: linear-gradient(180deg, #1f6feb, #1a5fd1);
   color: #ffffff;
-  border: 1px solid #2f81f7;
+  border: none;
   border-bottom-right-radius: 6px;
 }
 
 .bubble-ai {
-  background:#161b22;
+  background: #161b22;
   color: #e6edf3;
   border: 1px solid #2d333b;
   border-bottom-left-radius: 6px;

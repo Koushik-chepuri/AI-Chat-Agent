@@ -24,6 +24,15 @@ export function MessageList({
         </div>
       )}
 
+      {messages.length === 0 && !isThinking && (
+        <div className="bubble-row left">
+          <div className="bubble bubble-ai">
+            Hi! I’m your AI support agent for NovaMart. Ask me about shipping,
+            returns, or support hours.
+          </div>
+        </div>
+      )}
+
       <div ref={bottomRef} />
     </div>
   );
