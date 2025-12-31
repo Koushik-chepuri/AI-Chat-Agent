@@ -36,13 +36,11 @@ export async function createMessageController(
       });
     }
 
-    // save user msg
     const userMessage = await createUserMessageService(conversationId, trimmed);
     res
       .status(201)
       .json({ user: userMessage, assistant: null, status: "thinking" });
 
-    // generate reply
     generateAssistantReplyService(conversationId, trimmed).catch((err) => {
       console.error("AI reply failed:", err);
     });
