@@ -16,7 +16,7 @@ export class MockLLMService implements LLMService {
       return "Our support team is available Monday to Friday, 9:00 AM to 6:00 PM IST.";
     }
 
-    return "This is a mock response. Please enable Ollama for full AI behavior.";
+    return "This is a mock response. Only predefined FAQs are supported. Run the app locally with Ollama for full AI responses.";
   }
 }
 
