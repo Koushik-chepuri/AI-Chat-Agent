@@ -16,7 +16,12 @@ export function createApp() {
     app.use("/conversations", conversationsRoutes);
     app.use("/messages", messagesRoutes);
 
-    // global error handler
+    app.get("/", (_req, res) => {
+      res.status(200).json({
+        status: "ok",
+      });
+    });
+
     app.use(( err: any, req: Request, res: Response, next: NextFunction ) => {
         console.error("Error:", err);
 
